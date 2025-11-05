@@ -26,6 +26,7 @@ bool do_system(const char *cmd)
 	
 	if (ret == 0)
 	    return true;
+	    
     return false;
 }
 
@@ -80,9 +81,14 @@ bool do_exec(int count, ...)
 		
 	if (pid == 0)
 	{
-		execv(command[0], command);
+		status = execv(command[0], command);
+		if (status == -1)
+		{
+			exit (-1);	
+			return false;
+		}
 		
-		exit (-1);	
+		//exit (-1);	
 		
 	}
 	if ( waitpid(pid, &status, 0) == -1)
@@ -103,6 +109,7 @@ bool do_exec(int count, ...)
 */
 bool do_exec_redirect(const char *outputfile, int count, ...)
 {
+	//printf ("\n\ntest3\n");
     va_list args;
     va_start(args, count);
     char * command[count+1];
@@ -110,6 +117,7 @@ bool do_exec_redirect(const char *outputfile, int count, ...)
     for(i=0; i<count; i++)
     {
         command[i] = va_arg(args, char *);
+        //printf("arg %d %s\n", i, command[i]); 
     }
     command[count] = NULL;
     // this line is to avoid a compile warning before your implementation is complete
@@ -136,33 +144,49 @@ bool do_exec_redirect(const char *outputfile, int count, ...)
 	fd = open(outputfile, O_WRONLY|O_TRUNC|O_CREAT, 0644);
 	if (fd < 0) 
 	{ 
+		printf ("fd err = %d\n", fd);
 		return false;
 	}
 	
 	if (dup2(fd, STDOUT_FILENO) < 0)
 	{
+		printf ("dup2 err = %d\n", fd);
 		return false;	
 	}
 	close(fd);
 	
-	fflush(stdout);
+	//fflush(stdout);
 	
 	pid = fork();
 	
 	if (pid == -1)
 		return false;
+	//printf (" pid = %d\n", pid);
 		
 	if (pid == 0)
 	{
-		execv(command[0], command);
+		status = execvp(command[0], command);
+		//printf (" status = %d\n", status);
+		if (status == -1)
+		{
+			exit (-1);	
+			return false;
+		}
 		
-		exit (-1);	
+
 	}
+	waitpid(pid, &status, 0);
+		if (status  == -1)
+		{
+			//printf ("wf status = %d\n", status);
+			return false;
+		}
+		else if (status == 0)
+		{
+			//printf ("wt status = %d\n", status);
+			return true;
+		}
 	
-	if ( waitpid(pid, &status, 0) == -1)
-		return false;
-	else if (status == 0)
-	    return true;
 
     return false;
 }
