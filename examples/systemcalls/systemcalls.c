@@ -1,4 +1,9 @@
 #include "systemcalls.h"
+#include <stdlib.h>
+#include <unistd.h>
+#include <wait.h>
+#include <fcntl.h>
+
 
 /**
  * @param cmd the command to execute with system()
@@ -16,8 +21,12 @@ bool do_system(const char *cmd)
  *   and return a boolean true if the system() call completed with success
  *   or false() if it returned a failure
 */
-
-    return true;
+	int ret;
+	ret = system(cmd);
+	
+	if (ret == 0)
+	    return true;
+    return false;
 }
 
 /**
@@ -59,9 +68,32 @@ bool do_exec(int count, ...)
  *
 */
 
-    va_end(args);
+	va_end(args);
+	
+	
+	int pid;
+	int status;
+	
+	pid = fork();
+	if (pid == -1)
+		return false;
+		
+	if (pid == 0)
+	{
+		execv(command[0], command);
+		
+		exit (-1);	
+		
+	}
+	if ( waitpid(pid, &status, 0) == -1)
+		return false;
+	else if (status == 0)
+	    return true;
+		
+	
+    
 
-    return true;
+    return false;
 }
 
 /**
@@ -94,6 +126,43 @@ bool do_exec_redirect(const char *outputfile, int count, ...)
 */
 
     va_end(args);
+    
+    
+    
+   	int pid;
+	int status;
 
-    return true;
+	int fd;
+	fd = open(outputfile, O_WRONLY|O_TRUNC|O_CREAT, 0644);
+	if (fd < 0) 
+	{ 
+		return false;
+	}
+	
+	if (dup2(fd, STDOUT_FILENO) < 0)
+	{
+		return false;	
+	}
+	close(fd);
+	
+	fflush(stdout);
+	
+	pid = fork();
+	
+	if (pid == -1)
+		return false;
+		
+	if (pid == 0)
+	{
+		execv(command[0], command);
+		
+		exit (-1);	
+	}
+	
+	if ( waitpid(pid, &status, 0) == -1)
+		return false;
+	else if (status == 0)
+	    return true;
+
+    return false;
 }
