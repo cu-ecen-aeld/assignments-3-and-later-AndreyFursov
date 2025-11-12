@@ -52,9 +52,10 @@ if [ ! -e ${OUTDIR}/linux-stable/arch/${ARCH}/boot/Image ]; then
     make ARCH=${ARCH} CROSS_COMPILE=${CROSS_COMPILE} dtbs
     
     #clean
-#    make clean
+	#    make clean
 
 fi
+	cp ${OUTDIR}/linux-stable/arch/${ARCH}/boot/Image ${OUTDIR}	
 
 echo "Adding the Image in outdir"
 
@@ -98,12 +99,12 @@ ${CROSS_COMPILE}readelf -a bin/busybox | grep "program interpreter"
 ${CROSS_COMPILE}readelf -a bin/busybox | grep "Shared library"
 
 # TODO: Add library dependencies to rootfs
-SYSROOT=/home/andreyf/arm-cross-compiler/arm-gnu-toolchain-13.3.rel1-x86_64-aarch64-none-linux-gnu/aarch64-none-linux-gnu/libc
-echo  $SYSROOT
-cp -a $SYSROOT/lib/ld-linux-aarch64.so.1 $OUTDIR/rootfs/lib/
-cp -a $SYSROOT/lib64/libm.so.6 $OUTDIR/rootfs/lib64/
-cp -a $SYSROOT/lib64/libresolv.so.2 $OUTDIR/rootfs/lib64/
-cp -a $SYSROOT/lib64/libc.so.6 $OUTDIR/rootfs/lib64/
+#SYSROOT=/home/andreyf/arm-cross-compiler/arm-gnu-toolchain-13.3.rel1-x86_64-aarch64-none-linux-gnu/aarch64-none-linux-gnu/libc
+SYSROOT=$(${CROSS_COMPILE}gcc -print-sysroot) 
+cp -a ${SYSROOT}/lib/ld-linux-aarch64.so.1 ${OUTDIR}/rootfs/lib
+cp -a ${SYSROOT}/lib64/libm.so.6 ${OUTDIR}/rootfs/lib64
+cp -a ${SYSROOT}/lib64/libresolv.so.2 ${OUTDIR}/rootfs/lib64
+cp -a ${SYSROOT}/lib64/libc.so.6 ${OUTDIR}/rootfs/lib64
 
 
 # TODO: Make device nodes
